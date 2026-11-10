@@ -1,0 +1,5 @@
+{
+  "name": "rust-developer",
+  "version": "1.0.0",
+  "description": "Rust engineering skill based on roadmap.sh fundamentals: ownership, borrowing, lifetimes, zero-cost abstractions, idiomatic error handling, and modern ecosystem standards."
+}

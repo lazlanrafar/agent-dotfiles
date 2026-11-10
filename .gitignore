@@ -1,0 +1,7 @@
+.DS_Store
+*.local
+*.secret
+*.key
+.env
+mcp_config.json
+config.json
