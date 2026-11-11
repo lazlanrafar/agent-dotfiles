@@ -1,5 +1,5 @@
 ---
-name: cs-and-algorithms
+name: cs-algorithms
 description: >-
   Computer Science and Data Structures & Algorithms skill based on roadmap.sh/computer-science
   and roadmap.sh/datastructures-and-algorithms.

@@ -1,5 +1,5 @@
 ---
-name: database-and-sql
+name: database-sql
 description: >-
   Database Engineering, PostgreSQL Optimization, and Backend Performance skill based on roadmap.sh/sql,
   roadmap.sh/backend, roadmap.sh/backend-performance-best-practices, and Supabase Postgres best practices.

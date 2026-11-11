@@ -1,5 +1,5 @@
 ---
-name: api-and-security
+name: api-security
 description: >-
   API Design and API Security skill based on roadmap.sh/api-design and roadmap.sh/api-security-best-practices.
   Enforces REST/gRPC/GraphQL/SSE design standards, RFC 7807 Problem Details, cursor pagination,

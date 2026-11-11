@@ -2,7 +2,7 @@
 
 Portable repository for AI agent customizations (skills, rules, plugins, and MCP configuration templates) for seamless multi-device migration.
 
-## Structure
+## Structure & Skill Taxonomy
 
 ```text
 agent-dotfiles/
@@ -11,14 +11,33 @@ agent-dotfiles/
 ├── mcp/
 │   └── mcp_config.template.json  # Sanitized MCP server configuration template
 └── plugins/
-    ├── rust-developer/           # Idiomatic Rust 2024 skill (roadmap.sh/rust + rust-lang.org/learn + Axum/SQLx/WASM)
-    ├── python-developer/         # Python 3.12+, Data Analysis, & LLM/Anthropic AI skills (uv, PEP 723/735, ty, Polars, Claude API)
-    ├── typescript-developer/     # Bun + Turborepo + ElysiaJS + Drizzle backend & Next.js / Svelte 5 / shadcn atomic frontend
-    ├── golang-developer/         # Go 1.24+/1.27 backend skill (chi/v5, pgx/v5, sqlc, goose, RLS Tx, apperr, AEAD, MCP)
-    ├── flutter-developer/        # Flutter 3.x MVVM + Repository + Riverpod + freezed + Command/Result + flutter_ui
-    ├── backend-engineer/         # Engineering fundamentals (Architecture, System Design, API & Security, Postgres/RLS/pgvector, CS & Algorithms)
-    ├── caveman/                  # Ultra-concise communication & execution workflows
-    └── ponytail/                 # Lazy senior developer mode (YAGNI / stdlib-first)
+    ├── rust-developer/
+    │   └── skills/
+    │       └── rust-developer/       # Rust 2024, ownership, lifetimes, Axum, SQLx, Tokio, WASM
+    ├── python-developer/
+    │   └── skills/
+    │       ├── python-developer/     # Python 3.12+, uv, PEP 723/735, ty/mypy, FastAPI, Anthropic AI
+    │       └── python-data-analysis/ # Vectorized NumPy, Polars/DuckDB, EDA, Plotly/Streamlit, Airflow
+    ├── golang-developer/
+    │   └── skills/
+    │       └── golang-developer/     # Go 1.24+/1.27, chi/v5, pgx/v5, sqlc, goose, RLS Tx, apperr, MCP
+    ├── typescript-developer/
+    │   └── skills/
+    │       ├── typescript-developer/ # Bun, Turborepo, ElysiaJS (Eden), Drizzle ORM, TypeBox/Zod
+    │       ├── frontend-developer/   # Next.js 15 (React 19), Svelte 5 Runes/SvelteKit, URL state, UI craft
+    │       ├── module-structure/     # Colocated modules/{module}/{module}.{controller|service|repository|model|dto}
+    │       └── atomic-design/        # components/{atoms,molecules,organisms}, {module}-{name}, zero restyling
+    ├── flutter-developer/
+    │   └── skills/
+    │       └── flutter-developer/    # Flutter 3.x MVVM + Repository + Riverpod + freezed + flutter_ui
+    ├── backend-engineer/
+    │   └── skills/
+    │       ├── backend-architecture/ # Clean Architecture, Modular Monolith, Caching, Kafka/RabbitMQ, RED
+    │       ├── api-security/         # REST/gRPC/GraphQL/SSE, RFC 7807, Cursor Pagination, JWT/Argon2id, BOLA
+    │       ├── database-sql/         # PostgreSQL, forced RLS initPlan, pgvector HNSW, CUID2, atomic ledgers
+    │       └── cs-algorithms/        # Big-O complexity, Hash/Heap/Deque/Trie/B-Tree, Graphs, Cache Locality
+    ├── caveman/                      # Ultra-concise communication & execution workflows
+    └── ponytail/                     # Lazy senior developer mode (YAGNI / stdlib-first)
 ```
 
 ## Setup on a New Machine
