@@ -36,6 +36,10 @@ agent-dotfiles/
     │       ├── api-security/         # REST/gRPC/GraphQL/SSE, RFC 7807, Cursor Pagination, JWT/Argon2id, BOLA
     │       ├── database-sql/         # PostgreSQL, forced RLS initPlan, pgvector HNSW, CUID2, atomic ledgers
     │       └── cs-algorithms/        # Big-O complexity, Hash/Heap/Deque/Trie/B-Tree, Graphs, Cache Locality
+    ├── growth-marketing/
+    │   └── skills/
+    │       ├── seo-geo/              # Technical SEO, JSON-LD Entity Schema, Core Web Vitals, llms.txt, GEO/AEO Citability
+    │       └── product-marketing/    # Conversion Copywriting (anti-AI-slop), Landing Page CRO, Pricing, Programmatic SEO
     ├── caveman/                      # Ultra-concise communication & execution workflows
     └── ponytail/                     # Lazy senior developer mode (YAGNI / stdlib-first)
 ```
