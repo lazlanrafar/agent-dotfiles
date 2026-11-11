@@ -1,0 +1,5 @@
+{
+  "name": "product-planning",
+  "version": "1.0.0",
+  "description": "Interactive PRD discovery, requirement grilling, and vertical-slice implementation planning skills. Prevents assumptions by enforcing codebase reconnaissance, structured user interviews, explicit scope/non-goals, and concrete file-level plans before coding."
+}

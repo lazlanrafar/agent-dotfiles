@@ -40,6 +40,10 @@ agent-dotfiles/
     │   └── skills/
     │       ├── seo-geo/              # Technical SEO, JSON-LD Entity Schema, Core Web Vitals, llms.txt, GEO/AEO Citability
     │       └── product-marketing/    # Conversion Copywriting (anti-AI-slop), Landing Page CRO, Pricing, Programmatic SEO
+    ├── product-planning/
+    │   └── skills/
+    │       ├── prd-discovery/        # Interactive Socratic interview (7 checkpoints), never assumes, outputs PRD / FEAT_*.md
+    │       └── feature-planning/     # File-by-file vertical-slice implementation plan (DB -> Repo -> Service -> Controller -> UI)
     ├── caveman/                      # Ultra-concise communication & execution workflows
     └── ponytail/                     # Lazy senior developer mode (YAGNI / stdlib-first)
 ```
