@@ -11,7 +11,9 @@ agent-customizations/
 ├── mcp/
 │   └── mcp_config.template.json # Template konfigurasi MCP server (tanpa secret)
 └── plugins/
-    ├── rust-developer/         # Skill & pedoman Rust roadmap.sh
+    ├── rust-developer/         # Skill & pedoman Rust (roadmap.sh/rust + rust-lang.org/learn)
+    ├── python-developer/       # Skill Python 3.12+ & Data Analysis (roadmap.sh/python, python-data-analysis, docs.python.org/3)
+    ├── backend-engineer/       # Fundamental Engineering (Backend, System Design, API & Security, SQL & DB, CS & Algorithms)
     ├── caveman/                # Mode komunikasi terkompresi
     └── ponytail/               # Mode lazy senior dev (YAGNI/stdlib)
 ```
