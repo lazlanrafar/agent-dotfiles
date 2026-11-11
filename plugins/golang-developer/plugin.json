@@ -1,0 +1,5 @@
+{
+  "name": "golang-developer",
+  "version": "1.0.0",
+  "description": "Go 1.24+ backend engineering skill based on roadmap.sh/golang and Boekti production architecture: chi/v5, pgx/v5, sqlc, goose, tenant RLS transactions, cataloged apperr, stdlib AEAD crypto, and MCP servers."
+}

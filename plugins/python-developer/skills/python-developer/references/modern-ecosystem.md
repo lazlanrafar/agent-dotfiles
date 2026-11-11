@@ -10,9 +10,9 @@ Prefer the Python standard library first. When a third-party package is justifie
 
 | Need | Stdlib (Prefer First) | Modern Ecosystem Default | Avoid / Legacy |
 |------|-----------------------|--------------------------|----------------|
-| **Package & Env** | `venv` | **`uv`** | `pipenv`, `setup.py`, `easy_install` |
-| **Linter & Formatter** | — | **`ruff`** | `flake8`, separate `black` + `isort`, `yapf` |
-| **Type Checker** | — | **`mypy`** / **`pyright`** | Untyped code |
+| **Package & Env** | `venv` | **`uv`** (`uv add`, `uv run`, PEP 723/735, `uv_build`) | `pipenv`, `poetry`, `setup.py`, manual `venv` activation |
+| **Linter & Formatter** | — | **`ruff`** + **`prek`** (Rust-native pre-commit) | `flake8`, separate `black` + `isort`, `yapf` |
+| **Type Checker** | — | **`ty`** (Astral) / **`mypy --strict`** / **`pyright`** | Untyped code |
 | **Testing** | `unittest` | **`pytest`** + `hypothesis` | `nose` |
 | **Paths & Files** | **`pathlib`**, `shutil`, `tempfile` | — | `os.path` string concatenation |
 | **TOML Config** | **`tomllib`** (3.11+ read-only) | `tomli-w` (write) | Legacy `toml` |

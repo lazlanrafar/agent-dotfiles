@@ -11,9 +11,12 @@ agent-dotfiles/
 ├── mcp/
 │   └── mcp_config.template.json  # Sanitized MCP server configuration template
 └── plugins/
-    ├── rust-developer/           # Idiomatic Rust 2024 skill (roadmap.sh/rust + rust-lang.org/learn)
-    ├── python-developer/         # Python 3.12+ & Data Analysis skills (roadmap.sh/python, python-data-analysis, docs.python.org/3)
-    ├── backend-engineer/         # Engineering fundamentals (Architecture, System Design, API & Security, SQL & DB, CS & Algorithms)
+    ├── rust-developer/           # Idiomatic Rust 2024 skill (roadmap.sh/rust + rust-lang.org/learn + Axum/SQLx/WASM)
+    ├── python-developer/         # Python 3.12+, Data Analysis, & LLM/Anthropic AI skills (uv, PEP 723/735, ty, Polars, Claude API)
+    ├── typescript-developer/     # Bun + Turborepo + ElysiaJS + Drizzle backend & Next.js / Svelte 5 / shadcn atomic frontend
+    ├── golang-developer/         # Go 1.24+/1.27 backend skill (chi/v5, pgx/v5, sqlc, goose, RLS Tx, apperr, AEAD, MCP)
+    ├── flutter-developer/        # Flutter 3.x MVVM + Repository + Riverpod + freezed + Command/Result + flutter_ui
+    ├── backend-engineer/         # Engineering fundamentals (Architecture, System Design, API & Security, Postgres/RLS/pgvector, CS & Algorithms)
     ├── caveman/                  # Ultra-concise communication & execution workflows
     └── ponytail/                 # Lazy senior developer mode (YAGNI / stdlib-first)
 ```

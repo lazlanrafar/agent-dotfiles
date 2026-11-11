@@ -18,20 +18,30 @@ Engineering guidelines based on `roadmap.sh/python` and `docs.python.org/3` (Tut
 > - [Type System & Testing](./references/type-system-and-testing.md)
 > - [Modern Ecosystem](./references/modern-ecosystem.md)
 > - [Data Analysis, Visualization & Pipelines](./references/data-analysis-and-pipelines.md)
+> - [LLM & Anthropic AI Engineering](./references/llm-and-anthropic-ai.md)
 
 ---
 
-## 1. Environment & Packaging
+## 1. Environment & Packaging (`uv` + PEP 723 / PEP 735)
 
-- Target **Python 3.12+**. Manage multiple versions via `uv python` or `pyenv`.
-- Default package and environment manager: **`uv`**. Fallback: `python -m venv` + `pip`.
-- Define project metadata, dependencies, and tool configs in **`pyproject.toml`** (PEP 621) — never bare `setup.py` or unpinned `requirements.txt`.
-- Always isolate project environments; never install project dependencies globally.
+- Target **Python 3.12+**. Manage Python versions and virtualenvs exclusively via **`uv`**.
+- **Never manually activate virtualenvs (`source .venv/bin/activate`) or run `uv pip install`** — use `uv add <pkg>`, `uv remove <pkg>`, and `uv run <cmd>`.
+- Define project metadata in **`pyproject.toml`** (PEP 621) and dev/test dependencies in **`[dependency-groups]`** (PEP 735) rather than legacy `[project.optional-dependencies]`.
+- For **standalone single-file scripts**, embed **PEP 723 inline script metadata** and execute with `uv run script.py`:
+
+```python
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["httpx>=0.28", "pydantic>=2.10"]
+# ///
+```
 
 ```bash
 uv init myproject && cd myproject
-uv add fastapi uvicorn         # runtime dependencies
-uv add --dev ruff mypy pytest  # development tools
+uv add fastapi uvicorn              # runtime dependencies
+uv add --group dev ruff ty mypy pytest  # PEP 735 dev dependency group
+uv run pytest                       # runs inside the managed environment
 ```
 
 ---

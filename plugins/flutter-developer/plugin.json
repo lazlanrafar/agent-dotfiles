@@ -1,0 +1,5 @@
+{
+  "name": "flutter-developer",
+  "version": "1.0.0",
+  "description": "Flutter 3.x engineering skill based on production POS and customer mobile apps: MVVM + Repository (abstract/remote/fake), Riverpod DI, freezed models, Command/Result pattern, go_router, and shared flutter_ui atomic design system."
+}

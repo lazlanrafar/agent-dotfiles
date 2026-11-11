@@ -1,0 +1,5 @@
+{
+  "name": "typescript-developer",
+  "version": "1.0.0",
+  "description": "TypeScript full-stack engineering skills: Bun + Turborepo + ElysiaJS + Drizzle ORM backend, and Next.js / Svelte 5 / Tailwind v4 / shadcn atomic frontend."
+}
