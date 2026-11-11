@@ -17,7 +17,7 @@ Sources: [docs.python.org/3/tutorial](https://docs.python.org/3/tutorial/), [doc
 | `bytearray` | `bytearray(b"data")` | Mutable bytes |
 | `None` | `None` | Singleton null |
 
-**Walrus operator** (`:=`, PEP 572) — assign dalam expression:
+**Walrus operator** (`:=`, PEP 572) — assign inside an expression:
 ```python
 while chunk := f.read(8192):
     process(chunk)
