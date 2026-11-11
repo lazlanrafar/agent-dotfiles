@@ -1,37 +1,37 @@
-# Agent Customizations & Sync
+# Agent Dotfiles & Customizations
 
-Repositori portabel untuk menyimpan kustomisasi AI agent (skills, rules, plugins, MCP config template) agar mudah migrasi antar-device.
+Portable repository for AI agent customizations (skills, rules, plugins, and MCP configuration templates) for seamless multi-device migration.
 
-## Struktur
+## Structure
 
 ```text
-agent-customizations/
-├── install.sh                  # Script symlink plugin ke ~/.gemini/config/plugins/
-├── .gitignore                  # Filter token/secret lokal
+agent-dotfiles/
+├── install.sh                    # Symlinks plugins into ~/.gemini/config/plugins/
+├── .gitignore                    # Excludes local secrets and tokens
 ├── mcp/
-│   └── mcp_config.template.json # Template konfigurasi MCP server (tanpa secret)
+│   └── mcp_config.template.json  # Sanitized MCP server configuration template
 └── plugins/
-    ├── rust-developer/         # Skill & pedoman Rust (roadmap.sh/rust + rust-lang.org/learn)
-    ├── python-developer/       # Skill Python 3.12+ & Data Analysis (roadmap.sh/python, python-data-analysis, docs.python.org/3)
-    ├── backend-engineer/       # Fundamental Engineering (Backend, System Design, API & Security, SQL & DB, CS & Algorithms)
-    ├── caveman/                # Mode komunikasi terkompresi
-    └── ponytail/               # Mode lazy senior dev (YAGNI/stdlib)
+    ├── rust-developer/           # Idiomatic Rust 2024 skill (roadmap.sh/rust + rust-lang.org/learn)
+    ├── python-developer/         # Python 3.12+ & Data Analysis skills (roadmap.sh/python, python-data-analysis, docs.python.org/3)
+    ├── backend-engineer/         # Engineering fundamentals (Architecture, System Design, API & Security, SQL & DB, CS & Algorithms)
+    ├── caveman/                  # Ultra-concise communication & execution workflows
+    └── ponytail/                 # Lazy senior developer mode (YAGNI / stdlib-first)
 ```
 
-## Setup di Device Baru
+## Setup on a New Machine
 
-1. Clone repo ini:
+1. Clone this repository:
    ```bash
-   git clone <repo-url> ~/agent-customizations
-   cd ~/agent-customizations
+   git clone https://github.com/lazlanrafar/agent-dotfiles.git ~/agent-dotfiles
+   cd ~/agent-dotfiles
    ```
-2. Jalankan instalasi:
+2. Run the installer:
    ```bash
    ./install.sh
    ```
-3. Konfigurasi kredensial MCP di `~/.gemini/config/mcp_config.json` (isi token Boekti / Exa dll).
+3. Populate your MCP credentials in `~/.gemini/config/mcp_config.json` (Boekti token, Exa API key, etc.).
 
-## Pembagian Peran dengan Boekti (Online Memory)
+## Division of Responsibility with Boekti (Online Memory)
 
-- **Git Repo**: Menyimpan instruksi eksekusi, kode skill, skrip pengujian, dan konfigurasi toolchain yang harus identik di tiap mesin.
-- **Boekti (`boekti.lazlanrafar.com`)**: Menyimpan memori dinamis, catatan keputusan arsitektur (ADR), backlog/sprint items, dan dokumentasi proyek yang diakses via Boekti MCP server.
+- **Git Repository (`agent-dotfiles`)**: Stores static execution rules, engineering skills, verification scripts, and toolchain configurations shared identically across machines.
+- **Boekti (`boekti.lazlanrafar.com`)**: Stores dynamic project memory, Architecture Decision Records (ADRs), sprint/backlog items, and project documentation accessed via the Boekti MCP server.
