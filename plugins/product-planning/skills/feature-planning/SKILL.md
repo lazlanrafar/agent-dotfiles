@@ -12,6 +12,7 @@ description: >-
 Translates an approved PRD or feature specification into a **zero-ambiguity, file-by-file implementation plan** so neither human engineers nor AI agents have to guess filenames, type signatures, error codes, or verification steps.
 
 > **Prerequisite**: If requirements, user flows, permissions, or edge cases are still ambiguous, run [`prd-discovery`](../prd-discovery/SKILL.md) first to interview the user before generating the technical plan.
+> **Boekti Flow & Wiki Rules**: See [`../prd-discovery/reference.md`](../prd-discovery/reference.md) for ticket branch naming (`<PROJECT>-<n>-short-slug`), wiki updates (`save_page` + Decision Log), file claims, and `boekti e2e` completion evidence.
 
 ---
 
@@ -85,9 +86,10 @@ Structure every feature implementation plan with these exact sections:
 - [ ] **4.3** Wire route view with URL query state (`nuqs` / `url-state.ts`) and both empty states (*"None created yet"* vs. *"No items match your filters"*).
 - [ ] **4.4** Verify: `bun run typecheck`, `bun run lint`, and component/E2E tests.
 
-### Task 5: Living Documentation & Final Gate
-- [ ] **5.1** Update `docs/FEAT_<NAME>.md` (and `DESIGN.md` if any design token or shared atom changed).
-- [ ] **5.2** Run full workspace quality gate (`bun run ci` / `verify-*.sh`) and report results.
+### Task 5: Living Documentation, Boekti E2E Evidence & Final Gate
+- [ ] **5.1** Update the owning Boekti wiki page via MCP `save_page` + Decision Log row (`D<xx>`), or update `docs/FEAT_<NAME>.md` (and `DESIGN.md` if any design token or shared atom changed).
+- [ ] **5.2** Run full workspace quality gate (`bun run ci` / `verify-*.sh` / local E2E suite).
+- [ ] **5.3** When working on a Boekti ticket (`<PROJECT>-<n>`): upload E2E report and screenshots via `boekti e2e --item <PROJECT>-<n> --report <file> --evidence <dir>`, update status with `update_items`, and post a concise summary with `add_comment`.
 ```
 
 ---

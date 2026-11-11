@@ -8,27 +8,31 @@ description: >-
   Use whenever the user proposes a new feature, product idea, workflow change, or PRD.
 ---
 
-# PRD Discovery & Interactive Alignment Skill
+# PRD Discovery & Interactive Alignment Skill (with Boekti Flow)
 
-Prevents vague scope and silent assumptions by enforcing **structured codebase reconnaissance + active Socratic interviewing** before drafting a PRD or writing any feature code.
+Prevents vague scope and silent assumptions by enforcing **structured codebase + Boekti wiki reconnaissance and active Socratic interviewing** before drafting a PRD, updating a Boekti wiki page, or writing any feature code.
+
+> **Boekti Wiki, Ticket & Token-Budget Reference**: [reference.md](./reference.md)
 
 ---
 
 ## 1. The Iron Law: Never Assume, Always Ask
 
-When a user asks to build a new feature, modify a workflow, or draft a specification:
+When a user asks to build a new feature, start a Boekti ticket (`<PROJECT>-<n>`), modify a workflow, or draft a specification:
 1. **STOP before writing production code or locking in unverified design choices.**
 2. **Never silently invent** business rules, permission scopes, pricing/point formulas, state transitions, UI placement, or error behaviors that the user did not specify.
 3. If anything non-trivial can be interpreted in more than one way, **surface the options with their trade-offs and ask the user to decide**.
 
 ---
 
-## 2. Phase 1: Look Before You Ask (Codebase Reconnaissance)
+## 2. Phase 1: Look Before You Ask (Boekti + Codebase Reconnaissance)
 
-Before asking the user a single question, inspect the repository so you never ask what the codebase already answers:
-- Read `CLAUDE.md` / `AGENTS.md`, `docs/prd.md`, `docs/architecture.md` (and its Decision Log `Dxx`), and related `docs/FEAT_*.md` or wiki pages via MCP.
-- Check existing database tables (`packages/database` / `migrations`), API modules (`modules/{module}/`), and UI components (`components/{atoms,molecules,organisms}`) connected to the request.
-- Identify how adjacent features handle tenancy (`organization_id` / `workspace_id`), permissions, soft deletes, IDs (CUID2), and audit logging.
+Before asking the user a single question, inspect both Boekti and the repository so you never ask what is already documented:
+- **Boekti Ticket**: If a ticket key (`BOEKTI-12`, `BOX-45`) is given, call MCP `get_item` once.
+- **Boekti Wiki & Memory (Token-Budget Rule — Never Preload)**:
+  - Find the owning feature/architecture page with MCP `search` or `list_documents` (`project`, `source_path`), then call `get_document` with `outline: true` and read only the relevant `section` (see [reference.md](./reference.md)).
+  - If the session-start memory index lists a relevant topic, open it with `read_memory`.
+- **Local Repository**: Read `CLAUDE.md` / `AGENTS.md`, `docs/prd.md`, `docs/FEAT_*.md`, and inspect connected database tables (`packages/database` / `db/migrations`), API modules (`modules/{module}/` / `internal/{module}/`), and UI components (`components/{atoms,molecules,organisms}`).
 
 ---
 
@@ -52,9 +56,11 @@ In your response:
 
 ---
 
-## 4. Phase 3: Standardized PRD / Feature Spec Template
+## 4. Phase 3: Standardized PRD / Boekti Wiki Spec Output
 
-Once all decisions are locked in with the user, write the specification to the repository's standard location (`docs/prd.md`, `docs/FEAT_<NAME>.md`, `docs/features/<name>/README.md`, or the project's Boekti wiki page):
+Once all decisions are locked in with the user, write or update the specification in the project's source of truth:
+- **Boekti Wiki Projects (`BOEKTI`, `BOX`, etc.)**: Follow the token-budget rules in [reference.md](./reference.md#2-boekti-wiki-docs-rules-token-budget--d187) — one topic per page, one-sentence summary on line 1, current state only, under ~1,500 words per page / ~600 words per section, tables & bullets over prose, `path:line` code pointers, no em/en dashes. Save via MCP `save_page` (passing the read `version`) and add a Decision Log row (`D<xx>`).
+- **Repo-Docs Projects (`oewang`, `loyalty`, etc.)**: Write/update `docs/prd.md` or `docs/FEAT_<NAME>.md` using the structure below:
 
 ```markdown
 # FEAT: <Feature Name>
