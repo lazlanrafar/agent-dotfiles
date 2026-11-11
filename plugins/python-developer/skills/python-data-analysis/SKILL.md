@@ -9,51 +9,51 @@ description: >-
 
 # Python Data Analysis Skill
 
-Pedoman analisis data, visualisasi, dan data pipeline berbasis kurikulum [roadmap.sh/python-data-analysis](https://roadmap.sh/python-data-analysis).
+Guidelines for data manipulation, statistical exploration, visualization, and data pipelines based on [roadmap.sh/python-data-analysis](https://roadmap.sh/python-data-analysis).
 
-> **Referensi lengkap**: [`../python-developer/references/data-analysis-and-pipelines.md`](../python-developer/references/data-analysis-and-pipelines.md)
-
----
-
-## 1. Aturan Emas Data Manipulation (NumPy, Polars, Pandas)
-
-1. **Vectorization Over Loops**: Haram menggunakan `for` loop, `.iterrows()`, atau `.apply(axis=1)` untuk operasi kolom numerik/string. Gunakan ekspresi ter-vektorisasi.
-2. **Polars / DuckDB First untuk Beban Kerja Modern**:
-   - Gunakan **Polars** (`scan_parquet` + lazy API) atau **DuckDB** untuk pemrosesan cepat, hemat memori, dan multi-core.
-   - Jika menggunakan **Pandas 2.x**, aktifkan `dtype_backend="pyarrow"` dan gunakan method chaining (`.assign()`, `.query()`, `.pipe()`) daripada mutasi `df["col"] = ...` berantai yang memicu `SettingWithCopyWarning`.
-3. **Storage Format**: Gunakan **Parquet** (atau Arrow IPC) untuk penyimpanan antartahap. Hindari CSV untuk dataset > 50 MB karena tidak menyimpan skema tipe data dan lambat di-parse.
-4. **Reproducibility**: Selalu kunci generator acak dengan `rng = np.random.default_rng(42)`.
+> **Deep reference**: [`../python-developer/references/data-analysis-and-pipelines.md`](../python-developer/references/data-analysis-and-pipelines.md)
 
 ---
 
-## 2. Protokol Exploratory Data Analysis (EDA)
+## 1. Golden Rules of Data Manipulation (NumPy, Polars, Pandas)
 
-Setiap kali menganalisis dataset baru, jalankan pemeriksaan berurutan ini:
-1. **Schema & Integrity Check**: Dimensi `(rows, cols)`, tipe data tiap kolom, duplikasi primary key, dan persentase missing values.
-2. **Distribusi & Outlier**:
-   - Laporkan **Mean + SD** untuk distribusi simetris, DAN **Median + IQR** (`Q75 - Q25`) untuk distribusi skewed.
-   - Deteksi outlier menggunakan batas IQR (`[Q25 - 1.5*IQR, Q75 + 1.5*IQR]`) atau Z-score (`|z| > 3`). Jangan hapus outlier tanpa memeriksa apakah itu data valid atau error pencatatan.
-3. **Relasi & Korelasi**:
-   - Numerik vs Numerik: korelasi **Pearson** (linier) & **Spearman** (monotonik/rank).
-   - Kategorikal vs Kategorikal: **Cross-tabulation** (`crosstab`) + uji Chi-Square jika relevan.
-4. **Anti-Data Leakage**: Jika menyiapkan fitur untuk pemodelan, pisahkan train/validation/test **sebelum** menghitung statistik imputasi, scaling, atau encoding. Untuk data berurutan waktu, wajib gunakan **time-based split**.
+1. **Vectorization Over Loops**: Never use Python `for` loops, `.iterrows()`, or `.apply(axis=1)` for numeric or string column operations. Use vectorized expressions and broadcasting.
+2. **Polars / DuckDB First for Modern Workloads**:
+   - Prefer **Polars** (`scan_parquet` + lazy expressions) or **DuckDB** for fast, multi-threaded, memory-efficient data processing.
+   - When using **Pandas 2.x**, enable `dtype_backend="pyarrow"` and use method chaining (`.assign()`, `.query()`, `.pipe()`) instead of in-place mutations that trigger `SettingWithCopyWarning`.
+3. **Storage Formats**: Use **Parquet** (or Arrow IPC) for intermediate and analytical storage. Avoid CSV for datasets >50 MB due to missing schema metadata and slow parsing.
+4. **Reproducibility**: Always seed random generators explicitly via `rng = np.random.default_rng(42)`.
+
+---
+
+## 2. Exploratory Data Analysis (EDA) Protocol
+
+Execute these checks in order when inspecting any dataset:
+1. **Schema & Integrity Check**: Shape `(rows, cols)`, column dtypes, primary-key uniqueness, and missing-value ratios per column.
+2. **Distributions & Outliers**:
+   - Report **Mean + SD** for symmetric distributions, and **Median + IQR** (`Q75 - Q25`) for skewed distributions.
+   - Detect outliers via IQR bounds (`[Q25 - 1.5*IQR, Q75 + 1.5*IQR]`) or Z-scores (`|z| > 3`). Never drop outliers blindly without verifying whether they represent data errors or genuine tail events.
+3. **Relationships & Correlations**:
+   - Numeric vs. Numeric: **Pearson** (linear) and **Spearman** (monotonic rank) correlation matrices.
+   - Categorical vs. Categorical: **Cross-tabulation** (`crosstab`) and Chi-Square tests where appropriate.
+4. **Data Leakage Prevention**: Always split into train/validation/test sets **before** fitting imputers, scalers, or target encoders. Use **time-based splitting** for temporal datasets.
 
 ---
 
 ## 3. Data Visualization & Dashboards
 
-- **Matplotlib / Seaborn**: Selalu gunakan Object-Oriented interface (`fig, ax = plt.subplots()`), beri label sumbu beserta satuannya, judul yang menjelaskan temuan utama, dan tutup figure (`plt.close(fig)`) setelah disimpan.
-- **Plotly**: Gunakan untuk grafik interaktif (time-series multi-metrik, hover inspeksi anomali).
+- **Matplotlib / Seaborn**: Always use the Object-Oriented API (`fig, ax = plt.subplots()`), label axes with units, include a descriptive title, and close figures (`plt.close(fig)`) after saving.
+- **Plotly Express**: Use for interactive exploration (multi-metric time series, hover inspection).
 - **Streamlit / Dash**:
-  - Pisahkan fungsi komputasi data murni dari kode rendering UI.
-  - Wajib cache pembacaan data dengan `@st.cache_data` dan koneksi DB/model dengan `@st.cache_resource`.
+  - Separate pure data transformation functions from UI layout code.
+  - Cache data loads with `@st.cache_data` and DB connections / ML models with `@st.cache_resource`.
 
 ---
 
 ## 4. Big Data & Pipeline Engineering
 
-- **Scale Up Sebelum Scale Out**: Satu mesin modern dengan **DuckDB** atau **Polars streaming** mampu memproses puluhan hingga ratusan GB Parquet lebih cepat dan murah dibanding mengangkat cluster Spark kecil.
-- **PySpark / Dask**: Gunakan ketika data melampaui kapasitas disk/RAM single-node. Hindari Python UDF di PySpark; gunakan built-in `pyspark.sql.functions` atau Pandas/Arrow Vectorized UDF.
+- **Scale Up Before Scaling Out**: A single node running **DuckDB** or **Polars streaming** processes 10–250 GB of Parquet faster and cheaper than a small distributed cluster.
+- **PySpark / Dask**: Use when dataset size exceeds single-node memory/disk. Avoid row-by-row Python UDFs in PySpark; use built-in `pyspark.sql.functions` or Pandas/Arrow Vectorized UDFs.
 - **Airflow / Dagster**:
-  - Setiap task wajib **idempotent** dan **atomic** (safe untuk di-retry kapan saja).
-  - Jangan pernah menyimpan payload data di database metadata orchestrator (XCom); kirimkan path/URI penyimpanan objek (S3/GCS/lokal).
+  - Every task must be **idempotent** and **atomic** (safe to re-run for any `logical_date` without duplicating rows).
+  - Never pass large DataFrames through orchestrator metadata DBs (XCom); write Parquet to object storage (S3/GCS/local) and pass the URI.

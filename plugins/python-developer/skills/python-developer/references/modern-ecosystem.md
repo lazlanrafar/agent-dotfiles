@@ -1,33 +1,33 @@
 # Modern Ecosystem — Python Developer Reference
 
-Sumber: [docs.python.org/3/library/](https://docs.python.org/3/library/), [packaging.python.org](https://packaging.python.org/), roadmap.sh/python
+Sources: [docs.python.org/3/library/](https://docs.python.org/3/library/), [packaging.python.org](https://packaging.python.org/), roadmap.sh/python
 
 ---
 
-## Standar Pemilihan Library (2025/2026)
+## Library Selection Standards
 
-Utamakan stdlib terlebih dahulu. Jika butuh paket eksternal, gunakan standar de-facto modern:
+Prefer the Python standard library first. When a third-party package is justified, use modern ecosystem defaults:
 
-| Kebutuhan | Stdlib (Utamakan) | Ekosistem Modern (Jika butuh lebih) | Hindari / Legacy |
-|-----------|-------------------|-------------------------------------|------------------|
+| Need | Stdlib (Prefer First) | Modern Ecosystem Default | Avoid / Legacy |
+|------|-----------------------|--------------------------|----------------|
 | **Package & Env** | `venv` | **`uv`** | `pipenv`, `setup.py`, `easy_install` |
-| **Linter & Formatter** | — | **`ruff`** | `flake8`, `black` + `isort` terpisah, `yapf` |
-| **Type Checker** | — | **`mypy`** / **`pyright`** | Tanpa type check |
+| **Linter & Formatter** | — | **`ruff`** | `flake8`, separate `black` + `isort`, `yapf` |
+| **Type Checker** | — | **`mypy`** / **`pyright`** | Untyped code |
 | **Testing** | `unittest` | **`pytest`** + `hypothesis` | `nose` |
-| **Path & File** | **`pathlib`**, `shutil`, `tempfile` | — | `os.path` string manipulasi |
-| **Konfigurasi TOML** | **`tomllib`** (3.11+ read-only) | `tomli-w` (write) | `toml` lama |
-| **Data Validation** | `dataclasses` | **`pydantic` v2**, `msgspec` | `marshmallow` (untuk project baru) |
-| **HTTP Client** | `urllib.request` | **`httpx`** (sync + async) | `urllib2`, `requests` di dalam kode async |
-| **Web API / Server** | `wsgiref` | **`FastAPI`** / **`Litestar`** (API), **`Django`** (Full-stack) | `Flask` untuk async API murni |
-| **Database / ORM** | **`sqlite3`** | **`SQLAlchemy 2.0`** (async), `psycopg` v3, `alembic` | `SQLAlchemy 1.x` query style (`session.query()`) |
+| **Paths & Files** | **`pathlib`**, `shutil`, `tempfile` | — | `os.path` string concatenation |
+| **TOML Config** | **`tomllib`** (3.11+ read-only) | `tomli-w` (write) | Legacy `toml` |
+| **Data Validation** | `dataclasses` | **`pydantic` v2**, `msgspec` | `marshmallow` (for new projects) |
+| **HTTP Client** | `urllib.request` | **`httpx`** (sync + async) | `urllib2`, blocking `requests` inside async |
+| **Web API / Server** | `wsgiref` | **`FastAPI`** / **`Litestar`** (API), **`Django`** (Full-stack) | `Flask` for pure async APIs |
+| **Database / ORM** | **`sqlite3`** | **`SQLAlchemy 2.0`** (async), `psycopg` v3, `alembic` | Legacy SQLAlchemy 1.x `session.query()` |
 | **CLI** | **`argparse`** | **`typer`** / `click` / `rich` | `optparse` |
-| **Data & Numerik** | `statistics`, `decimal` | **`polars`**, `numpy`, `duckdb` | Loop Python murni pada jutaan baris |
+| **Data & Analytics** | `statistics`, `decimal` | **`polars`**, `numpy`, `duckdb` | Pure Python loops over millions of rows |
 
 ---
 
 ## Project Layout (`src/` layout & `pyproject.toml`)
 
-Gunakan `src/` layout agar test selalu menguji paket ter-install, bukan folder lokal secara tidak sengaja:
+Use the `src/` layout so tests always run against the installed package rather than accidentally importing local working directory files:
 
 ```
 myproject/
@@ -36,14 +36,14 @@ myproject/
 ├── src/
 │   └── myproject/
 │       ├── __init__.py
-│       ├── py.typed        # Marker PEP 561 agar mypy membaca type hints paket ini
+│       ├── py.typed        # PEP 561 marker so type checkers read package annotations
 │       └── main.py
 └── tests/
     ├── conftest.py
     └── test_main.py
 ```
 
-Contoh `pyproject.toml` lengkap:
+Production `pyproject.toml` template:
 
 ```toml
 [project]
@@ -87,8 +87,8 @@ strict = true
 
 ## Observability & Structured Logging
 
-- Jangan pakai `print()` di kode produksi. Gunakan modul `logging` atau `structlog`.
-- Gunakan lazy formatting di `logging` (`logger.info("user %s logged in", user_id)`) atau extra dict agar tidak membebani string formatting saat level log tidak aktif.
+- Never use `print()` in production services. Use the standard `logging` module or `structlog`.
+- Use `%s` lazy formatting in `logging` calls (`logger.info("user %s logged in", user_id)`) or structured `extra` dicts to avoid unnecessary string interpolation when a log level is disabled.
 
 ```python
 import logging
@@ -103,12 +103,12 @@ def process_order(order_id: str) -> None:
 
 ## Security & Cryptography (`secrets`, SQL Injection, Subprocess)
 
-1. **Token & Randomness**: Jangan pernah gunakan modul `random` untuk token keamanan, OTP, atau password. Wajib gunakan **`secrets`**:
+1. **Tokens & Randomness**: Never use the `random` module for security tokens, OTPs, or passwords. Always use **`secrets`**:
    ```python
    import secrets
    token = secrets.token_urlsafe(32)
-   is_valid = secrets.compare_digest(a, b)  # anti timing-attack
+   is_valid = secrets.compare_digest(a, b)  # constant-time comparison
    ```
-2. **Subprocess**: Selalu panggil `subprocess.run(["cmd", arg1], check=True)` dengan list argumen, **jangan pernah `shell=True`** dengan input user.
-3. **Deserialisasi**: Jangan pernah `pickle.loads()` atau `yaml.load()` (pakai `yaml.safe_load()`) pada data dari user/network.
-4. **SQL**: Selalu gunakan parameterized query (`cursor.execute("SELECT * FROM t WHERE id = ?", (uid,))`), jangan pernah f-string ke dalam SQL.
+2. **Subprocesses**: Always invoke `subprocess.run(["cmd", arg1], check=True)` with an explicit argument list; **never use `shell=True`** with user-controlled input.
+3. **Deserialization**: Never call `pickle.loads()` or unsafe `yaml.load()` (use `yaml.safe_load()`) on untrusted data.
+4. **SQL Queries**: Always use parameterized queries (`cursor.execute("SELECT * FROM t WHERE id = ?", (uid,))`); never interpolate SQL via f-strings.

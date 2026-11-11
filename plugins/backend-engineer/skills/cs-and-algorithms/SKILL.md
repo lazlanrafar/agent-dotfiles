@@ -10,43 +10,43 @@ description: >-
 
 # Computer Science & Algorithms Skill
 
-Pedoman pemilihan struktur data, analisis kompleksitas, dan algoritma inti berbasis kurikulum `roadmap.sh/computer-science` dan `roadmap.sh/datastructures-and-algorithms`.
+Data structure selection, complexity analysis, and algorithmic engineering guidelines based on `roadmap.sh/computer-science` and `roadmap.sh/datastructures-and-algorithms`.
 
 ---
 
-## 1. Pemilihan Struktur Data (`O(1)` vs `O(log n)` vs `O(n)`)
+## 1. Data Structure Selection (`O(1)` vs. `O(log n)` vs. `O(n)`)
 
-Selalu pilih struktur data berdasarkan operasi dominan pada jalur kritis (*hot path*):
+Select data structures according to the dominant operation on the critical path:
 
-| Kebutuhan Operasi Dominan | Struktur Data Salah (Sering Terjadi) | Struktur Data Tepat | Kompleksitas |
-|---------------------------|--------------------------------------|---------------------|--------------|
-| Cek keanggotaan (`x in items`) berulang kali | `list` / `Array` (`O(n)`) | **`set` / `HashSet`** | **`O(1)` rata-rata** |
-| Antrean FIFO (`pop` dari depan) | `list.pop(0)` / `Vec::remove(0)` (`O(n)`) | **`deque` / `VecDeque`** | **`O(1)`** |
-| Ambil elemen terkecil/terbesar Top-K terus-menerus | `sort()` ulang tiap iterasi (`O(n log n)`) | **`heapq` / `BinaryHeap`** | **`O(log n)` push/pop, `O(n log k)` Top-K** |
-| Pencarian range / floor / ceiling terurut | Scan linier (`O(n)`) | **Sorted Array + `bisect` (`O(log n)`) / `BTreeMap`** | **`O(log n)`** |
-| Autocomplete / prefix matching string | Filter semua string (`O(N * L)`) | **Trie (Prefix Tree) / Radix Tree** | **`O(L)` panjang prefix** |
-| Cache dengan batas kapasitas | Dict tanpa batas (memory leak) | **LRU Cache (Hash Map + Doubly Linked List)** | **`O(1)` get/put** |
-| Melacak komponen terhubung dinamis | BFS/DFS berulang kali | **Disjoint Set / Union-Find** | **`O(α(n))` ≈ `O(1)`** |
+| Dominant Operation | Common Anti-Pattern | Optimal Structure | Complexity |
+|--------------------|---------------------|-------------------|------------|
+| Repeated membership checks (`x in items`) | `list` / `Array` (`O(n)`) | **`set` / `HashSet`** | **`O(1)` average** |
+| FIFO queue (`pop` from front) | `list.pop(0)` / `Vec::remove(0)` (`O(n)`) | **`deque` / `VecDeque`** | **`O(1)`** |
+| Repeated Top-K / min / max extraction | Re-sorting on every step (`O(n log n)`) | **`heapq` / `BinaryHeap`** | **`O(log n)` push/pop, `O(n log k)` Top-K** |
+| Ordered range / floor / ceiling queries | Linear scan (`O(n)`) | **Sorted Array + `bisect` / `BTreeMap`** | **`O(log n)`** |
+| String prefix / autocomplete search | Scanning all strings (`O(N * L)`) | **Trie (Prefix Tree) / Radix Tree** | **`O(L)` prefix length** |
+| Bounded in-memory cache | Unbounded dict (memory leak) | **LRU Cache (Hash Map + Doubly Linked List)** | **`O(1)` get/put** |
+| Dynamic connected components | Repeated BFS/DFS | **Disjoint Set (Union-Find)** | **`O(α(n))` ≈ `O(1)`** |
 
 ---
 
-## 2. Pola Algoritma Inti untuk Engineering Produksi
+## 2. Core Algorithmic Patterns for Production Engineering
 
 1. **Two Pointers & Sliding Window (`O(n)`)**:
-   - Gunakan untuk pencarian subarray/substring kontigu, rate-limiting sliding window, atau deduplikasi array terurut tanpa alokasi memori ekstra (`O(1)` space).
-2. **Binary Search on Answer (`O(log(range) * check)`)**:
-   - Tidak hanya untuk mencari elemen di array terurut; gunakan saat fungsi predikat bersifat monotonik (`False, False, ..., True, True`), misalnya mencari kapasitas minimum worker atau batas threshold optimal.
-3. **Graph & Dependency Resolution**:
-   - **Shortest Path**: **BFS** untuk graf tak berbobot (`O(V + E)`), **Dijkstra** (dengan Min-Heap) untuk bobot non-negatif (`O((V + E) log V)`).
-   - **DAG & Urutan Eksekusi (Build System, Task Workflow, Migration)**: Gunakan **Topological Sort (Kahn's Algorithm / Indegree atau DFS 3-warna)** sekaligus untuk mendeteksi *cycle* (circular dependency).
-4. **Recursion vs Iteration**:
-   - Di bahasa tanpa *Tail-Call Optimization* (seperti Python dan sebagian besar target Rust), pohon/graf yang dalam (`depth > 1000`) bisa memicu `RecursionError` / stack overflow. Gunakan **eksplisit stack/queue iteratif** untuk input yang kedalamannya tidak terbatas.
+   - Use for contiguous subarray/substring constraints, sliding-window rate limiters, and in-place sorted array deduplication (`O(1)` auxiliary space).
+2. **Binary Search on the Answer (`O(log(range) * check)`)**:
+   - Apply whenever a feasibility predicate `can_satisfy(x)` is monotonic (`False, ..., False, True, ..., True`), such as finding minimum worker capacity or optimal batch thresholds.
+3. **Graph Traversal & Dependency Resolution**:
+   - **Shortest Path**: **BFS** for unweighted graphs (`O(V + E)`), **Dijkstra** (with a Min-Heap) for non-negative edge weights (`O((V + E) log V)`).
+   - **DAG Execution Ordering (Build Systems, Task Schedulers, Migrations)**: Use **Topological Sort (Kahn's in-degree algorithm or 3-color DFS)** to compute valid execution order and detect circular dependencies.
+4. **Recursion vs. Iteration**:
+   - In languages without guaranteed Tail-Call Optimization (Python, most Rust targets), deep trees/graphs (`depth > 1000`) risk stack overflow (`RecursionError`). Use an **explicit iterative stack/queue** whenever input depth is unbounded.
 
 ---
 
-## 3. Systems Thinking: Memory Hierarchy & Bit Manipulation
+## 3. Systems Thinking: Memory Hierarchy & Streaming
 
-- **Spatial & Temporal Locality**: Array kontigu (`Vec<T>`, NumPy ndarray) jauh lebih cepat di CPU cache L1/L2 dibanding struktur berbasis pointer tersebar (Linked List / pohon objek Python) meskipun Big-O di atas kertas sama.
-- **Streaming / Constant-Memory Processing (`O(1)` Space)**:
-  - Saat memproses file/stream besar, gunakan iterator/generator satu lintasan (*single-pass*).
-  - Untuk statistik streaming: gunakan **Welford's algorithm** untuk rata-rata/variansi online, **Reservoir Sampling** untuk sampel acak ukuran `k`, atau **HyperLogLog / Bloom Filter** untuk kardinalitas dan cek keanggotaan probabilistik hemat memori.
+- **Spatial & Temporal Cache Locality**: Contiguous arrays (`Vec<T>`, NumPy `ndarray`) vastly outperform pointer-chasing structures (linked lists, boxed node trees) on modern CPU L1/L2 caches even when asymptotic Big-O is identical.
+- **Single-Pass Streaming (`O(1)` Space)**:
+  - Process large files and network streams lazily via iterators/generators.
+  - Use **Welford's algorithm** for online mean/variance, **Reservoir Sampling** for uniform random samples of size $k$, and **HyperLogLog / Bloom Filters** for memory-bounded cardinality and membership checks.

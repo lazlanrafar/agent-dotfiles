@@ -1,164 +1,77 @@
 # Traits, Generics & Type-Level Programming
 
-Berdasarkan The Rust Book Ch.10, Ch.18, Ch.20 (Advanced Traits & Types).
+Deep reference based on The Rust Book (Ch. 10, 18, 20).
 
 ## Generics & Monomorphization
 
 ```rust
-// Generic function: compiler generate konkret tiap tipe yang dipakai
 fn largest<T: PartialOrd>(list: &[T]) -> &T { ... }
 ```
 
-Monomorphization = zero runtime overhead. Tidak ada boxing, tidak ada virtual dispatch.
+Rust monomorphizes generic code at compile time, generating specialized machine code for each concrete type with zero runtime vtable overhead.
 
-## Trait: Interface Rust
+## Traits & The Orphan Rule
 
 ```rust
 pub trait Summary {
     fn summarize(&self) -> String;
-    fn preview(&self) -> String {  // Default implementation
+    fn preview(&self) -> String {
         format!("{}...", &self.summarize()[..20])
     }
 }
 ```
 
-**Orphan Rule**: boleh impl trait untuk tipe hanya jika trait ATAU tipe didefinisikan dalam crate-mu. Mencegah konflik antar-library.
+- **Orphan Rule (Coherence)**: you can implement a trait for a type only if either the trait OR the type is local to your crate.
+- **Newtype Pattern**: wrap an external type in a single-field tuple struct (`struct Wrapper(Vec<String>);`) to implement external traits or enforce domain invariants.
 
-## Dispatch: Static vs Dynamic
+## Static vs. Dynamic Dispatch
 
 ```rust
-// Static dispatch: compiler tahu tipe konkret saat compile — preferred
+// Static dispatch (preferred default)
 fn notify(item: &impl Summary) { ... }
-fn notify<T: Summary>(item: &T) { ... }  // equivalent
 
-// Dynamic dispatch: pakai saat koleksi heterogen atau return type tidak diketahui
-fn returns_summarizable() -> Box<dyn Summary> { ... }
-fn notify(items: &[Box<dyn Summary>]) { ... }
+// Dynamic dispatch (for heterogeneous collections or runtime-selected types)
+fn notify_all(items: &[Box<dyn Summary>]) { ... }
 ```
 
-`dyn Trait` selalu berada di balik pointer (`Box`, `&`, `Arc`) karena Sized tidak diketahui.
-
-## Trait Bounds & Where Clause
+## Associated Types vs. Generic Type Parameters
 
 ```rust
-// Inline — OK untuk 1-2 bound
-fn print<T: Display + Clone>(item: T) { ... }
-
-// Where clause — lebih readable untuk multiple bound
-fn some_function<T, U>(t: &T, u: &U) -> String
-where
-    T: Display + Clone,
-    U: Clone + Debug,
-{ ... }
-```
-
-## Associated Types vs Generic Parameters
-
-```rust
-// Associated type: satu implementasi per tipe — lebih ergonomis di site pemakaian
+// Associated type: one logical implementation per Self type
 trait Iterator {
     type Item;
     fn next(&mut self) -> Option<Self::Item>;
 }
 
-// Generic param: boleh banyak impl untuk tipe yang sama
+// Generic parameter: multiple implementations per Self type (e.g. From<u32>, From<&str>)
 trait From<T> {
     fn from(value: T) -> Self;
 }
 ```
 
-Gunakan **Associated Type** jika hubungan "satu-ke-satu". Gunakan **Generic Param** jika tipe bisa impl trait untuk banyak parameter.
+## Closures & Capture Modes
 
-## Advanced Traits
-
-### Newtype Pattern
-
-Bungkus tipe external untuk impl trait (memotong Orphan Rule):
-
-```rust
-struct Wrapper(Vec<String>);
-impl fmt::Display for Wrapper { ... }  // Vec<String> dari stdlib, Display dari stdlib
-```
-
-### Supertraits
+Closures automatically implement one or more of:
+- `FnOnce`: consumes captured variables by value (callable once).
+- `FnMut`: mutates captured variables via `&mut`.
+- `Fn`: borrows captured variables immutably via `&` (or captures nothing).
 
 ```rust
-trait OutlinePrint: fmt::Display {  // Implementor WAJIB impl Display dulu
-    fn outline_print(&self) {
-        let s = self.to_string();  // boleh pakai Display method
-        println!("*{}*", s);
-    }
-}
-```
-
-### Fully Qualified Syntax
-
-Saat banyak trait punya method dengan nama sama:
-
-```rust
-<Type as Trait>::method(&value);
-// Contoh:
-<Dog as Animal>::baby_name();
-```
-
-## Type Aliases
-
-```rust
-type Thunk = Box<dyn Fn() -> String + Send>;  // Alias untuk tipe panjang
-type Result<T> = std::result::Result<T, io::Error>;  // Alias dengan default error
-```
-
-## Never Type `!`
-
-```rust
-// Fungsi yang tidak pernah return (diverging function)
-fn server_loop() -> ! {
-    loop { handle_connection(); }
-}
-
-// panic!, loop, continue, return punya tipe !
-let guess: u32 = match guess.trim().parse() {
-    Ok(num) => num,
-    Err(_) => continue,  // ! dapat dicoerce ke tipe apapun
-};
-```
-
-## Closures
-
-Closures capture environment. Tiga trait closure:
-- `FnOnce`: consume captured values (dipanggil sekali).
-- `FnMut`: mutably borrow captured values.
-- `Fn`: immutably borrow (atau tidak capture apapun).
-
-```rust
-// move closure: take ownership dari captured values (berguna untuk thread)
 let name = String::from("Alice");
-thread::spawn(move || println!("Hello, {}", name));
+std::thread::spawn(move || println!("Hello, {name}"));
 
-// Return closure dari function
 fn make_adder(x: i32) -> impl Fn(i32) -> i32 {
     move |y| x + y
 }
 ```
 
-## Iterators & Lazy Evaluation
+## Iterators & Zero-Cost Adapters
 
 ```rust
-// Iterator adapters: lazy, zero-cost abstraction
-let result: Vec<i32> = (1..=10)
+let sum_of_squares: i32 = (1..=10)
     .filter(|x| x % 2 == 0)
     .map(|x| x * x)
-    .collect();
-
-// Custom Iterator
-struct Counter { count: u32 }
-impl Iterator for Counter {
-    type Item = u32;
-    fn next(&mut self) -> Option<u32> {
-        if self.count < 5 { self.count += 1; Some(self.count) }
-        else { None }
-    }
-}
+    .sum();
 ```
 
-**Aturan agen**: Gunakan iterator chains atas manual `for` loop dengan index kecuali perlu akses index explisit.
+Iterator adapters (`map`, `filter`, `flat_map`, `fold`) are lazy and compile down to tight loops without intermediate allocations.

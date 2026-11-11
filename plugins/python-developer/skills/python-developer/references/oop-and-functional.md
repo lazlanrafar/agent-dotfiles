@@ -1,6 +1,6 @@
 # OOP, Protocols & Functional Programming — Python Developer Reference
 
-Sumber: [docs.python.org/3/reference/datamodel.html](https://docs.python.org/3/reference/datamodel.html), [docs.python.org/3/library/dataclasses.html](https://docs.python.org/3/library/dataclasses.html), [docs.python.org/3/library/functools.html](https://docs.python.org/3/library/functools.html), roadmap.sh/python
+Sources: [docs.python.org/3/reference/datamodel.html](https://docs.python.org/3/reference/datamodel.html), [docs.python.org/3/library/dataclasses.html](https://docs.python.org/3/library/dataclasses.html), [docs.python.org/3/library/functools.html](https://docs.python.org/3/library/functools.html), roadmap.sh/python
 
 ---
 
@@ -9,11 +9,11 @@ Sumber: [docs.python.org/3/reference/datamodel.html](https://docs.python.org/3/r
 ```python
 from dataclasses import dataclass, field
 
-# Immutable value object dengan slots (hemat memori, akses cepat)
+# Immutable value object with slots (lower memory footprint, faster attribute access)
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Money:
     amount: int
-    currency: str = "IDR"
+    currency: str = "USD"
     tags: list[str] = field(default_factory=list, compare=False)
 
     def __post_init__(self) -> None:
@@ -21,24 +21,24 @@ class Money:
             raise ValueError("amount cannot be negative")
 ```
 
-- Gunakan `@dataclass(slots=True)` secara default di Python 3.10+ kecuali butuh dynamic attribute atau multiple inheritance kompleks.
-- Gunakan `field(default_factory=...)` untuk mutable default.
-- Untuk simple tuple dengan nama field tanpa metode mutasi: `typing.NamedTuple`.
+- Default to `@dataclass(slots=True)` in Python 3.10+ unless dynamic attributes or complex multiple inheritance are required.
+- Always use `field(default_factory=...)` for mutable default values.
+- Use `typing.NamedTuple` for lightweight, tuple-compatible immutable records.
 
 ---
 
 ## Python Data Model (Dunder Methods)
 
-Implementasikan dunder method hanya jika selaras dengan semantik objek:
+Implement dunder methods only when they match domain semantics:
 
-| Kategori | Dunder Methods | Kegunaan |
-|----------|----------------|----------|
-| Representasi | `__repr__`, `__str__`, `__format__` | Debugging (`!r`) vs display (`!s`) |
-| Perbandingan | `__eq__`, `__lt__` (+ `@functools.total_ordering`) | Equality & sorting |
-| Hashing | `__hash__` | Wajib jika dipakai sebagai key `dict` / anggota `set` (hanya untuk objek immutable) |
-| Container | `__len__`, `__getitem__`, `__iter__`, `__contains__` | Sequence / mapping behavior |
-| Context | `__enter__`, `__exit__`, `__aenter__`, `__aexit__` | `with` / `async with` |
-| Callable | `__call__` | Stateful function object |
+| Category | Dunder Methods | Purpose |
+|----------|----------------|---------|
+| Representation | `__repr__`, `__str__`, `__format__` | Unambiguous debugging (`!r`) vs. user display (`!s`) |
+| Comparison | `__eq__`, `__lt__` (+ `@functools.total_ordering`) | Equality & ordering |
+| Hashing | `__hash__` | Required for `dict` keys / `set` members (only on immutable objects) |
+| Containers | `__len__`, `__getitem__`, `__iter__`, `__contains__` | Sequence / mapping protocol |
+| Context | `__enter__`, `__exit__`, `__aenter__`, `__aexit__` | `with` / `async with` resource lifecycle |
+| Callable | `__call__` | Stateful function objects |
 
 ```python
 import functools
@@ -65,11 +65,11 @@ class Version:
 
 ---
 
-## Structural Subtyping (Protocols) vs ABC
+## Structural Subtyping (Protocols) vs. ABC
 
-- **Utamakan Composition & `typing.Protocol`** dibanding inheritance hierarki dalam.
-- Pakai **`abc.ABC` + `@abstractmethod`** hanya jika ingin berbagi implementasi konkrit atau memaksa validasi saat class definition.
-- Pakai **`@runtime_checkable`** pada `Protocol` hanya jika benar-benar butuh `isinstance()` saat runtime.
+- **Prefer Composition and `typing.Protocol`** over deep inheritance trees.
+- Use **`abc.ABC` + `@abstractmethod`** only when sharing concrete base functionality or enforcing instantiation-time checks.
+- Apply **`@runtime_checkable`** to a `Protocol` only when runtime `isinstance()` checks are required.
 
 ```python
 from typing import Protocol, runtime_checkable
@@ -104,7 +104,7 @@ class Account:
         return val >= 0
 ```
 
-- Gunakan `@functools.cached_property` untuk komputasi properti mahal pada objek yang datanya tidak berubah.
+- Use `@functools.cached_property` for expensive derived attributes on immutable/read-heavy instances.
 
 ---
 
@@ -113,9 +113,8 @@ class Account:
 ```python
 import functools
 import itertools
-import operator
 
-# Single-dispatch generic function (pengganti bersih visitor pattern)
+# Single-dispatch generic function (clean alternative to visitor boilerplate)
 @functools.singledispatch
 def serialize(val: object) -> str:
     raise TypeError(f"Unsupported type: {type(val)}")

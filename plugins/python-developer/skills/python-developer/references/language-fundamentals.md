@@ -1,6 +1,6 @@
 # Language Fundamentals — Python Developer Reference
 
-Sumber: [docs.python.org/3/tutorial](https://docs.python.org/3/tutorial/), [docs.python.org/3/reference](https://docs.python.org/3/reference/), roadmap.sh/python
+Sources: [docs.python.org/3/tutorial](https://docs.python.org/3/tutorial/), [docs.python.org/3/reference](https://docs.python.org/3/reference/), roadmap.sh/python
 
 ---
 

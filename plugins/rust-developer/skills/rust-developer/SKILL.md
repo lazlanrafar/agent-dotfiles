@@ -9,39 +9,38 @@ description: >-
 
 # Rust Developer Skill
 
-Pedoman rekayasa Rust berbasis kurikulum roadmap.sh + rust-lang.org/learn (The Book, Rust by Example, Rustonomicon).
+Engineering guidelines based on `roadmap.sh/rust` and `rust-lang.org/learn` (The Book, Rust by Example, Rustonomicon, Cargo Book).
 
-> **Lihat referensi mendalam di folder `references/`** — dimuat hanya saat dibutuhkan:
+> **On-demand deep references in `references/`**:
 > - [Memory, Lifetimes & Smart Pointers](./references/memory-and-lifetimes.md)
 > - [Traits, Generics & Type-Level Programming](./references/traits-generics-types.md)
 > - [Concurrency, Async & Parallelism](./references/async-and-concurrency.md)
 > - [Macros & Metaprogramming](./references/macros-and-metaprogramming.md)
-> - [Cargo, Workspace & Ekosistem Modern](./references/modern-ecosystem.md)
+> - [Cargo, Workspaces & Modern Ecosystem](./references/modern-ecosystem.md)
 
 ---
 
 ## 1. Memory Safety & Ownership (Core Pillar)
 
-- **3 Hukum Ownership**: satu pemilik, satu waktu, drop otomatis saat keluar scope (RAII).
-- **Borrowing**: banyak `&T` (read) XOR satu `&mut T` (write) — tidak boleh bersamaan.
-- **Slice over owning**: argumen fungsi pakai `&str` bukan `&String`, `&[T]` bukan `&Vec<T>`.
-- **No clone tanpa alasan**: pahami alur data dan gunakan borrowing. Clone hanya jika semantik independen memang diperlukan.
-- **Non-Lexical Lifetimes**: borrow checker Rust 2018+ mengakhiri borrow saat last-use, bukan end-of-block.
+- **Three Ownership Laws**: one owner per value, one owner at a time, deterministic `Drop` on scope exit (RAII).
+- **Borrowing Rules**: any number of shared `&T` references XOR exactly one exclusive `&mut T` reference.
+- **Accept Slices Over Owned Containers**: take `&str` instead of `&String`, and `&[T]` instead of `&Vec<T>` in function parameters.
+- **Avoid Unjustified `.clone()`**: borrow where possible; clone only when independent ownership semantics are required.
+- **Non-Lexical Lifetimes (NLL)**: borrows end at the last usage point, not necessarily the end of the lexical block.
 
-**Referensi mendalam**: [memory-and-lifetimes.md](./references/memory-and-lifetimes.md)
+**Deep reference**: [memory-and-lifetimes.md](./references/memory-and-lifetimes.md)
 
 ---
 
 ## 2. Idiomatic Error Handling
 
-- **Haram `unwrap()` / `expect()`** di kode produksi. Hanya boleh di unit test atau prototipe one-off.
-- **`Option<T>`** untuk nilai yang mungkin tidak ada. **`Result<T, E>`** untuk operasi yang bisa gagal.
-- Propagasikan error dengan operator `?`.
-- **Library / core domain**: pakai `thiserror` — enum error bertipe kuat.
-- **Application / binary**: pakai `anyhow` — error kontekstual dengan `.context()`.
+- **Never use `.unwrap()` or `.expect()` in production code**. Reserve them for unit tests or provably infallible static initialization.
+- Use **`Option<T>`** for optional values and **`Result<T, E>`** for fallible operations.
+- Propagate errors with the `?` operator.
+- **Libraries / Domain crates**: use `thiserror` to define strongly typed error enums.
+- **Applications / Binaries**: use `anyhow` with `.context()` / `.with_context()`.
 
 ```rust
-// thiserror
 #[derive(thiserror::Error, Debug)]
 pub enum AppError {
     #[error("not found: {0}")]
@@ -50,7 +49,6 @@ pub enum AppError {
     Db(#[from] sqlx::Error),
 }
 
-// anyhow
 fn load() -> anyhow::Result<Config> {
     let s = std::fs::read_to_string("config.toml")
         .context("missing config.toml")?;
@@ -60,118 +58,92 @@ fn load() -> anyhow::Result<Config> {
 
 ---
 
-## 3. Types, Traits & Abstraksi
+## 3. Types, Traits & Abstractions
 
-- **Static dispatch default** (`impl Trait` / generics): zero-cost, compiler inline.
-- **Dynamic dispatch** (`Box<dyn Trait>`) hanya untuk koleksi heterogen atau return type dinamis.
-- **Enum sebagai ADT**: modelkan state machine dengan `enum` agar illegal states impossible.
-- **Iterator chains** atas `for` loop manual dengan index.
-- **Newtype pattern**: bungkus tipe eksternal untuk impl trait (atasi Orphan Rule).
+- **Default to Static Dispatch** (`impl Trait` / generics): monomorphized, zero-cost, inlinable.
+- **Use Dynamic Dispatch** (`Box<dyn Trait>` / `&dyn Trait`) only for heterogeneous collections or runtime polymorphism.
+- **Make Illegal States Unrepresentable**: model domain state machines with algebraic data types (`enum`) and newtypes (`struct UserId(u64)`).
+- **Prefer Iterator Chains** over manual indexed `for` loops.
 
-**Referensi mendalam**: [traits-generics-types.md](./references/traits-generics-types.md)
+**Deep reference**: [traits-generics-types.md](./references/traits-generics-types.md)
 
 ---
 
 ## 4. Smart Pointers & Interior Mutability
 
-| Tipe | Kegunaan | Thread Safe? |
-|:-----|:---------|:-------------|
-| `Box<T>` | Alokasi heap, single owner | Ya |
-| `Rc<T>` | Multiple ownership, single-thread | **Tidak** |
-| `Arc<T>` | Multiple ownership, multi-thread | **Ya** |
-| `Cell<T>` | Interior mutability untuk `Copy` | Tidak |
-| `RefCell<T>` | Interior mutability, runtime check | Tidak |
-| `Cow<'a, B>` | Clone-on-write adaptif | - |
-| `Weak<T>` | Non-owning ref, cegah cycle | - |
-
-Gunakan `Weak<T>` untuk referensi balik (parent-child, observer) guna mencegah memory leak.
+| Type | Purpose | Thread-Safe? |
+|:-----|:--------|:-------------|
+| `Box<T>` | Heap allocation, single owner | Yes |
+| `Rc<T>` | Reference-counted shared ownership | **No** (single-thread) |
+| `Arc<T>` | Atomically reference-counted shared ownership | **Yes** |
+| `Cell<T>` | Interior mutability for `Copy` types | No |
+| `RefCell<T>` | Interior mutability with runtime borrow checks | No |
+| `Cow<'a, B>` | Clone-on-write (borrowed or owned) | Yes (if `B: Sync`) |
+| `Weak<T>` | Non-owning reference to break reference cycles | Matches `Rc`/`Arc` |
 
 ---
 
 ## 5. Concurrency & Async
 
-- **Message passing** (`mpsc::channel`, `crossbeam`) over shared mutable state.
-- **Shared state**: `Arc<Mutex<T>>` atau `Arc<RwLock<T>>` — satu lock, satu resource.
-- **Async runtime**: `tokio` (standar ekosistem). Jangan blokir async thread dengan sync I/O.
-- **I/O-bound → async**, **CPU-bound → `spawn_blocking` atau thread / `rayon`**.
-- Pastikan tipe yang di-share antar-thread implement `Send + Sync`.
+- Prefer **message passing** (`std::sync::mpsc`, `tokio::sync::mpsc`, `crossbeam`) over shared mutable state.
+- For shared mutable state, keep lock scopes tight with `Arc<Mutex<T>>` or `Arc<RwLock<T>>`. Never hold a `std::sync::MutexGuard` across an `.await` point.
+- **Async runtime**: use `tokio`. Never block async worker threads with synchronous I/O or heavy CPU loops — offload via `tokio::task::spawn_blocking` or `rayon`.
 
 ```rust
-// CPU-bound di dalam async context
 let result = tokio::task::spawn_blocking(|| heavy_computation()).await?;
 ```
 
-**Referensi mendalam**: [async-and-concurrency.md](./references/async-and-concurrency.md)
+**Deep reference**: [async-and-concurrency.md](./references/async-and-concurrency.md)
 
 ---
 
 ## 6. Macros & Metaprogramming
 
-- **`macro_rules!`**: pattern matching atas token, untuk DSL kecil dan variadic args.
-- **Procedural macros**: butuh crate terpisah (`proc-macro = true`), gunakan `syn` + `quote`.
-  - `#[derive(...)]`: generate trait impl otomatis.
-  - Attribute macro: transformasi fungsi/struct.
-  - Function-like: parsing kustom.
+- **`macro_rules!`**: declarative token pattern matching for eliminating repetitive boilerplate or variadic helpers.
+- **Procedural macros** (`#[derive]`, attribute, function-like): isolate in a dedicated `proc-macro = true` crate using `syn`, `quote`, and `proc-macro2`.
 
-**Referensi mendalam**: [macros-and-metaprogramming.md](./references/macros-and-metaprogramming.md)
+**Deep reference**: [macros-and-metaprogramming.md](./references/macros-and-metaprogramming.md)
 
 ---
 
 ## 7. Testing
 
-```bash
-cargo test                              # Semua test
-cargo test -- --nocapture              # Tampilkan stdout
-cargo test integration                 # Filter nama test
-#[tokio::test]                         # Async test
-```
-
-- Unit test: dalam modul `#[cfg(test)]` di file yang sama.
-- Integration test: file di `tests/` — hanya akses public API.
-- Doc test: contoh kode dalam `///` komentar — dijalankan `cargo test`.
+- **Unit tests**: co-located in `#[cfg(test)] mod tests` within the same file.
+- **Integration tests**: standalone files in `tests/` exercising only the public API.
+- **Doc tests**: executable examples inside `///` doc comments verified by `cargo test`.
 
 ---
 
-## 8. Cargo & Workspace
+## 8. Cargo & Workspaces
 
-```bash
-cargo check                            # Cepat: validasi tanpa build
-cargo clippy --all-targets -- -D warnings
-cargo fmt -- --check
-cargo doc --open
-cargo audit                            # Cek CVE
-```
+- Use **Cargo Workspaces** (`resolver = "3"`, `[workspace.dependencies]`) for multi-crate repositories.
+- Audit dependencies with `cargo audit` and keep feature flags minimal.
 
-Gunakan **Cargo Workspace** untuk monorepo (multiple crates). Gunakan `workspace.dependencies` untuk share versi.
-
-**Referensi mendalam**: [modern-ecosystem.md](./references/modern-ecosystem.md)
+**Deep reference**: [modern-ecosystem.md](./references/modern-ecosystem.md)
 
 ---
 
-## 9. Crate Standar yang Disetujui
+## 9. Approved Ecosystem Crates
 
-| Kategori | Crate |
-|:---------|:------|
-| CLI | `clap` (derive feature) |
+| Category | Standard Crate |
+|:---------|:---------------|
+| CLI | `clap` (derive) |
 | Serialization | `serde`, `serde_json` |
 | Async Runtime | `tokio` |
 | HTTP Client | `reqwest` |
 | Web Framework | `axum` |
-| Database | `sqlx` (compile-time query check) |
-| Error (lib) | `thiserror` |
-| Error (app) | `anyhow` |
-| Logging | `tracing`, `tracing-subscriber` |
-| Benchmark | `criterion` |
+| Database | `sqlx` (compile-time checked SQL) |
+| Errors (lib / app) | `thiserror` / `anyhow` |
+| Observability | `tracing`, `tracing-subscriber` |
+| Benchmarking | `criterion` |
 
 ---
 
-## 10. Quality Gate Wajib
+## 10. Mandatory Quality Gates
 
-Setiap perubahan kode Rust wajib lolos:
+Every Rust change must pass [`scripts/verify-rust.sh`](./scripts/verify-rust.sh):
 
 ```bash
-./skills/rust-developer/scripts/verify-rust.sh
-# Atau individual:
 cargo fmt -- --check
 cargo check
 cargo clippy --all-targets --all-features -- -D warnings

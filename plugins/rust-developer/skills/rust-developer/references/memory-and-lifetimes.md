@@ -1,93 +1,83 @@
 # Memory Management, Lifetimes & Smart Pointers
 
-Referensi mendalam berdasarkan The Rust Book Ch.4, 10, 15 dan Rustonomicon.
+Deep reference based on The Rust Book (Ch. 4, 10, 15) and the Rustonomicon.
 
-## Stack vs Heap
+## Stack vs. Heap
 
-- Stack: ukuran tetap saat compile-time, LIFO, sangat cepat.
-- Heap: ukuran dinamis, butuh pointer, `Box<T>` sebagai penghubung.
-- **Aturan agen**: jika data bisa stack (ukuran tetap), jangan paksakan ke heap.
+- **Stack**: fixed size known at compile time, LIFO allocation, cache-friendly and fast.
+- **Heap**: dynamic size or lifetime beyond a single call frame, managed via smart pointers (`Box<T>`, `Vec<T>`, `String`).
+- **Rule**: keep fixed-size values on the stack unless indirection, recursive types, or large ownership transfers require heap allocation.
 
-## Ownership Rules (3 Hukum Inti)
+## Ownership Rules
 
-1. Tiap nilai punya tepat satu pemilik.
-2. Hanya boleh ada satu pemilik di satu waktu.
-3. Pemilik keluar scope → nilai di-`drop` otomatis (RAII, seperti destructor C++).
+1. Every value in Rust has a single owner.
+2. There can only be one owner at a time.
+3. When the owner goes out of scope, the value is automatically dropped (`Drop` trait / RAII).
 
-## Move Semantics vs Copy
+## Move Semantics vs. `Copy`
 
-- Tipe yang implement `Copy` (integers, `bool`, `char`, tuples kecil): otomatis di-copy saat assign.
-- Tipe non-`Copy` (`String`, `Vec<T>`, custom struct): **move** saat assign — pemilik lama tidak valid lagi.
-- `clone()` adalah deep copy eksplisit: pakai hanya jika memang dibutuhkan semantik independen.
+- Types implementing `Copy` (scalars, `bool`, `char`, shared references `&T`, tuples/arrays of `Copy` types) are duplicated via bitwise copy on assignment.
+- Non-`Copy` types (`String`, `Vec<T>`, `Box<T>`, custom structs) **move** ownership on assignment — the previous binding becomes invalidated at compile time.
+- `.clone()` performs an explicit deep copy; call it only when independent ownership is intentionally needed.
 
 ## Borrowing & References
 
 ```rust
-// Shared borrow: banyak reader, immutable
-fn read(s: &str) { ... }
-
-// Mutable borrow: satu writer, exclusive
-fn modify(s: &mut String) { ... }
+fn read(s: &str) { /* shared, immutable borrow */ }
+fn modify(s: &mut String) { /* exclusive, mutable borrow */ }
 ```
 
-**Aturan ketat borrow checker**:
-- Boleh banyak `&T` aktif secara bersamaan, ATAU
-- Tepat satu `&mut T` aktif — tidak boleh ada `&T` lain bersamaan.
-
-**Non-Lexical Lifetimes (NLL)**: Rust 2018+ mengakhiri borrow saat referensi terakhir dipakai, bukan saat keluar scope blok. Efektif: borrow checker lebih fleksibel.
+- Either any number of shared references (`&T`) OR exactly one mutable reference (`&mut T`) may be active at the same time.
+- **Non-Lexical Lifetimes (NLL)**: a borrow ends at the last point the reference is used, not at the end of the enclosing lexical block.
 
 ## Lifetime Annotations
 
 ```rust
-// Elision: compiler tahu lifetime tanpa anotasi
+// Elided: compiler infers lifetimes automatically
 fn first_word(s: &str) -> &str { ... }
 
-// Perlu anotasi: compiler tidak bisa menyimpulkan mana yang hidup lebih lama
+// Explicit: output lifetime is tied to the shorter of x and y
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
     if x.len() > y.len() { x } else { y }
 }
 
-// Struct menyimpan reference: wajib anotasi
+// Struct holding a reference requires an explicit lifetime parameter
 struct Excerpt<'a> {
     part: &'a str,
 }
 ```
 
-**3 Lifetime Elision Rules**:
-1. Tiap parameter `&` dapat lifetime parameter sendiri.
-2. Jika tepat satu input lifetime, output pakai lifetime yang sama.
-3. Jika ada `&self` / `&mut self`, output pakai lifetime `self`.
+**Three Lifetime Elision Rules**:
+1. Each elided reference parameter gets its own distinct lifetime parameter.
+2. If there is exactly one input lifetime parameter, that lifetime is assigned to all elided output lifetimes.
+3. If one of the parameters is `&self` or `&mut self`, the lifetime of `self` is assigned to all elided output lifetimes.
 
 **Variance** (Rustonomicon):
-- `&'a T` adalah *covariant* atas `'a` dan `T`: `'long <: 'short` → `&'long T` dapat dipakai di tempat `&'short T`.
-- `&'a mut T` adalah *invariant* atas `T`: tidak boleh substitusi subtipe untuk mencegah data race.
+- `&'a T` is *covariant* over both `'a` and `T` (`'long: 'short` allows passing `&'long T` where `&'short T` is expected).
+- `&'a mut T` is *covariant* over `'a` but *invariant* over `T` to prevent type-unsound mutation.
 
-## Smart Pointers
+## Smart Pointers & Reference Cycles
 
-| Tipe | Kegunaan | Thread Safe? |
+| Type | Use Case | Thread-Safe? |
 |:-----|:---------|:-------------|
-| `Box<T>` | Alokasi heap, owned, tidak ada overhead runtime | Ya (data di-move, bukan shared) |
-| `Rc<T>` | Multiple ownership, reference counted | **Tidak** (single-thread only) |
-| `Arc<T>` | Multiple ownership, atomic reference counted | **Ya** |
-| `Cell<T>` | Interior mutability untuk `Copy` types | Tidak |
-| `RefCell<T>` | Interior mutability, runtime borrow check | Tidak |
-| `Mutex<T>` | Mutual exclusion, interior mutability | **Ya** |
-| `RwLock<T>` | Multi-reader / single-writer | **Ya** |
-| `Cow<'a, B>` | Clone-on-write: borrowed atau owned adaptif | - |
+| `Box<T>` | Single-owner heap allocation | Yes |
+| `Rc<T>` | Reference-counted shared ownership | **No** |
+| `Arc<T>` | Atomic reference-counted shared ownership | **Yes** |
+| `Cell<T>` | Zero-overhead interior mutability for `Copy` types | No |
+| `RefCell<T>` | Single-threaded dynamic borrow checking | No |
+| `Mutex<T>` / `RwLock<T>` | Synchronized multi-threaded interior mutability | **Yes** |
+| `Cow<'a, B>` | Clone-on-write abstraction over borrowed or owned data | Yes (if `B: Sync`) |
 
-**Deref Coercion**: `Box<T>`, `Rc<T>`, `Arc<T>` impl `Deref` → otomatis dereference saat diperlukan.
-**Drop trait**: saat keluar scope, Rust panggil `drop` secara otomatis — jangan panggil manual kecuali via `std::mem::drop(val)`.
+### Breaking Reference Cycles with `Weak<T>`
 
-### Hindari Reference Cycle
-
-`Rc<RefCell<T>>` bisa buat siklus memori yang tidak ter-drop. Gunakan `Weak<T>` untuk referensi balik (parent-child tree, observer pattern):
+Combining `Rc<RefCell<T>>` (or `Arc<Mutex<T>>`) in cyclic graphs leaks memory because strong counts never reach zero. Use `Weak<T>` for parent or observer back-references:
 
 ```rust
-use std::rc::{Rc, Weak};
 use std::cell::RefCell;
+use std::rc::{Rc, Weak};
 
 struct Node {
     children: Vec<Rc<RefCell<Node>>>,
-    parent: Option<Weak<RefCell<Node>>>,  // Weak, bukan Rc!
+    parent: Option<Weak<RefCell<Node>>>, // Weak prevents reference cycles
 }
 ```

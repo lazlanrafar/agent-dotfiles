@@ -1,22 +1,22 @@
 # Concurrency & Async — Python Developer Reference
 
-Sumber: [docs.python.org/3/library/asyncio.html](https://docs.python.org/3/library/asyncio.html), [docs.python.org/3/library/concurrent.futures.html](https://docs.python.org/3/library/concurrent.futures.html), roadmap.sh/python
+Sources: [docs.python.org/3/library/asyncio.html](https://docs.python.org/3/library/asyncio.html), [docs.python.org/3/library/concurrent.futures.html](https://docs.python.org/3/library/concurrent.futures.html), roadmap.sh/python
 
 ---
 
-## Memilih Model Concurrency (GIL vs I/O vs CPU)
+## Choosing a Concurrency Model (GIL vs. I/O vs. CPU)
 
-| Beban Kerja | Pilihan Utama | Alasan |
-|-------------|---------------|--------|
-| **I/O-bound tinggi** (ribuan koneksi HTTP/DB/WS) | `asyncio` | Satu thread, overhead konteks sangat ringan, tanpa race condition OS thread |
-| **I/O-bound menengah / library sync** | `ThreadPoolExecutor` / `asyncio.to_thread` | Melepas GIL saat syscall I/O, mudah dipakai dengan library blocking |
-| **CPU-bound** (komputasi angka, parsing berat) | `ProcessPoolExecutor` / `multiprocessing` | Bypass GIL dengan proses terpisah (atau Python 3.13+ free-threaded / `concurrent.interpreters`) |
+| Workload | Primary Choice | Rationale |
+|----------|----------------|-----------|
+| **High-concurrency I/O** (thousands of HTTP/DB/WS connections) | `asyncio` | Single-threaded cooperative multitasking, minimal memory overhead, no OS thread races |
+| **Moderate I/O / legacy blocking libraries** | `ThreadPoolExecutor` / `asyncio.to_thread` | Releases GIL during OS I/O syscalls; integrates cleanly with sync libraries |
+| **CPU-bound** (number crunching, heavy parsing) | `ProcessPoolExecutor` / `multiprocessing` | Bypasses GIL via separate processes (or Python 3.13+ free-threading / subinterpreters) |
 
 ---
 
 ## Structured Concurrency (`asyncio.TaskGroup`)
 
-Di Python 3.11+, gunakan `asyncio.TaskGroup` dibanding `asyncio.gather()`. Jika satu task gagal, task lain otomatis di-cancel dengan aman dan error dikumpulkan dalam `ExceptionGroup`.
+In Python 3.11+, always prefer `asyncio.TaskGroup` over `asyncio.gather()`. If any child task fails, sibling tasks are automatically cancelled and exceptions are surfaced via `ExceptionGroup`.
 
 ```python
 import asyncio
@@ -44,7 +44,7 @@ async def process_batch(ids: list[int]) -> list[dict[str, int]]:
 
 ## Timeouts & Cancellation
 
-Gunakan `asyncio.timeout()` (Python 3.11+) sebagai context manager:
+Use `asyncio.timeout()` (Python 3.11+) as a context manager:
 
 ```python
 import asyncio
@@ -57,11 +57,11 @@ async def fetch_with_deadline() -> str:
         return "fallback"
 ```
 
-- **Jangan menelan `asyncio.CancelledError`!** Jika menangkap `BaseException` atau `CancelledError` untuk cleanup, wajib `raise` kembali agar cancellation tidak macet.
+- **Never swallow `asyncio.CancelledError`!** If you catch `BaseException` or `CancelledError` for cleanup, always re-raise it immediately so task cancellation propagates.
 
 ---
 
-## Sinkronisasi & Pembatasan Beban (`Semaphore`, `Queue`, `ContextVar`)
+## Synchronization & Backpressure (`Semaphore`, `Queue`, `ContextVar`)
 
 ```python
 import asyncio
@@ -70,7 +70,7 @@ from contextvars import ContextVar
 request_id_var: ContextVar[str] = ContextVar("request_id", default="unknown")
 
 async def bounded_worker(sem: asyncio.Semaphore, url: str) -> None:
-    async with sem:  # Batasi maksimal N request paralel
+    async with sem:  # Cap maximum concurrent requests
         await call_url(url)
 
 async def producer_consumer() -> None:
@@ -88,11 +88,11 @@ async def producer_consumer() -> None:
 
 ---
 
-## Menjembatani Sync dan Async
+## Bridging Sync and Async Safely
 
-- **Jangan panggil fungsi blocking (`time.sleep`, `requests.get`, CPU berat) langsung di dalam `async def`** karena akan membekukan seluruh event loop.
-- Bungkus I/O blocking dengan `await asyncio.to_thread(blocking_fn, arg1)`.
-- Bungkus komputasi CPU berat dengan `loop.run_in_executor(process_pool, cpu_fn, arg1)`.
+- **Never call blocking functions (`time.sleep`, `requests.get`, heavy CPU loops) directly inside `async def`**, as they freeze the entire event loop.
+- Offload blocking I/O with `await asyncio.to_thread(blocking_fn, arg1)`.
+- Offload heavy CPU work with `await loop.run_in_executor(process_pool, cpu_fn, arg1)`.
 
 ```python
 import asyncio
